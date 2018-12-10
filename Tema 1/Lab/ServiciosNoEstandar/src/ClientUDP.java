@@ -1,65 +1,78 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.Scanner;
 
 public class ClientUDP {
 
-	private static final int BUFFER_LENGTH = 2048;
-	
-	public static void main(String[] args) {
+	private static final int TIMEOUT = 3000;
+	private static final int MAXTRIES = 6;
+
+	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 
 		if ((args.length < 1) || (args.length > 2)) {
 			throw new IllegalArgumentException("Parameter(s): <Server> [<Port>]");
 		}
-		try {
-			
-			// Server IP and port
-			
-			InetAddress serverAddress = InetAddress.getByName(args[0]); 
-			int servPort = (args.length == 2) ? Integer.parseInt(args[1]) : 6789;
-			
-			System.out.println("We're connected to the server with IP " + serverAddress + " through the port " + servPort +
-					"\nEnter your message:");
+		
+		System.out.println("Cliente iniciado.");
+		
+		DatagramPacket recibir;
+		DatagramPacket enviar;
+		String recibido;
+		String mensaje; 
+		byte[] resp;
+		int conect = 0;
+		InetAddress serverAdd = InetAddress.getByName(args[0]);
+		int port = Integer.parseInt(args[1]);
+		DatagramSocket ds= new DatagramSocket();
+		ds.setSoTimeout(TIMEOUT);
+		Scanner sc;
+		do {
+			sc = new Scanner(System.in);
+			mensaje = sc.nextLine();
 
-			BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-			String message=stdIn.readLine();
-			
-			DatagramSocket socket = new DatagramSocket();
-			
-			byte [] bytesToSend = new byte[BUFFER_LENGTH];
-			byte [] bytesToRecevive = new byte[BUFFER_LENGTH];
-			
-			
-			while (!message.equals(".")) {
-				
-				bytesToSend = message.getBytes();
-				
-				System.out.println(message);
-				
-				DatagramPacket sendPacket = new DatagramPacket(bytesToSend, BUFFER_LENGTH, serverAddress, servPort);
-				socket.send(sendPacket);
-				
-				/*DatagramPacket receivePacket = new DatagramPacket(new byte[bytesToSend.length], bytesToSend.length);
-				socket.receive(receivePacket);
-				servPort = receivePacket.getPort();
-				System.out.println("ECO:"+ new String(receivePacket.getData()));*/
-				
-				message=stdIn.readLine();
-				
-			}			
-			
-			socket.close();
+			resp = new byte[mensaje.length()];
 
-		} catch (Exception e) {
+			enviar = new DatagramPacket(mensaje.getBytes(),mensaje.getBytes().length,serverAdd,port);
+			recibir = new DatagramPacket(resp,resp.length);
 
-			System.out.println("xd");
-			System.out.println(e.getMessage());
+			int intentos = 0;
+			boolean respuesta = false;
 
-		}
+			do {
+				ds.send(enviar);
+				try {
+					ds.receive(recibir);
+					if(conect >= 1 && port == ds.getPort()) { 
+						respuesta = true;
+					}else {
+						respuesta = false;
+					}
+				}catch (InterruptedIOException e) {
+					intentos+=1;
+					System.out.println("Timeout, " + intentos + " tries have been made.");
 
+				}
+
+			}while(!respuesta && intentos < MAXTRIES);
+
+			if(respuesta) {
+				recibido = new String(recibir.getData());
+				System.out.println("Respuesta: "+ recibido);
+				if(conect == 0) { // stores the port of the thread
+					conect = 1;
+					port = recibir.getPort();
+				}
+			}else {
+				System.out.println("No se ha recuperado respuesta");
+				mensaje = ".";
+			}
+
+		}while(!mensaje.equals("."));
+		sc.close();
+		ds.close();
 	}
 
 }

@@ -2,5 +2,6 @@ Desarrollo de Servicios No Estándar:
 Ejercicio 1:
 	
 Ejercicio 2:
+	Como argumentos se les pasa, al cliente, dirección IP a la que conectarse y el puerto por el que establecer la comunicación, y al servidor, solo el puerto por el que escuchar.
 	
 Ejercicio 3:
