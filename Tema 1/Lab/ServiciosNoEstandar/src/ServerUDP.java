@@ -34,14 +34,25 @@ public class ServerUDP {
 
 		byte [] recibirDatos = new byte[8192];
 		byte [] enviarDatos = new byte[8192];
+		
+		System.out.println(socketServidor.isConnected());
 
 		while(true) {
+			
+			System.out.println("hola");
 
 			DatagramPacket recibirPaquete = new DatagramPacket(recibirDatos, recibirDatos.length);
 
-			try {        
+			System.out.println("adios");
+			
+			try {
 
+				System.out.println("adios");
+				
 				socketServidor.receive(recibirPaquete);
+				System.out.println(socketServidor.isConnected());
+				
+				System.out.println("adios");
 
 			} catch (IOException e) {
 
@@ -51,6 +62,8 @@ public class ServerUDP {
 				System.exit(0);
 
 			}
+			
+			System.out.println(socketServidor.isConnected());
 
 			String frase = new String(recibirPaquete.getData());
 
@@ -68,7 +81,7 @@ public class ServerUDP {
 
 			} catch (IOException e) {
 
-				System.out.println("Error al recibir23");
+				System.out.println("Error al enviar");
 				socketServidor.close();
 				System.exit(0);
 

@@ -26,7 +26,7 @@ public class ClientUDP {
 		int conect = 0;
 		InetAddress serverAdd = InetAddress.getByName(args[0]);
 		int port = Integer.parseInt(args[1]);
-		DatagramSocket ds= new DatagramSocket();
+		DatagramSocket ds = new DatagramSocket();
 		ds.setSoTimeout(TIMEOUT);
 		Scanner sc;
 		do {
