@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,64 +17,29 @@ public class ClientUDP {
 		if ((args.length < 1) || (args.length > 2)) {
 			throw new IllegalArgumentException("Parameter(s): <Server> [<Port>]");
 		}
+		InetAddress serverAddress = InetAddress.getByName(args[0]); // IP Servidor
+		int servPort = (args.length == 2) ? Integer.parseInt(args[1]) : 6789;
 		
-		System.out.println("Cliente iniciado.");
+		System.out.println("Cliente iniciado. Conectándose a "+ serverAddress.getHostAddress());
 		
-		DatagramPacket recibir;
-		DatagramPacket enviar;
-		String recibido;
-		String mensaje; 
-		byte[] resp;
-		int conect = 0;
-		InetAddress serverAdd = InetAddress.getByName(args[0]);
-		int port = Integer.parseInt(args[1]);
-		DatagramSocket ds = new DatagramSocket();
-		ds.setSoTimeout(TIMEOUT);
-		Scanner sc;
-		do {
-			sc = new Scanner(System.in);
-			mensaje = sc.nextLine();
+		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+		DatagramSocket socket = new DatagramSocket();
+		String mensaje=stdIn.readLine();
+		while(!mensaje.equals(".")) {	
+			byte[] bytesToSend = mensaje.getBytes();
+			DatagramPacket sendPacket = new DatagramPacket(bytesToSend, //Datagrama a enviar
+					bytesToSend.length, serverAddress, servPort);
+			socket.send(sendPacket);
+			DatagramPacket receivePacket =
+					//Datagrama a recibir
+			new DatagramPacket(new byte[bytesToSend.length], bytesToSend.length);
+			socket.receive(receivePacket); // Podria no llegar nunca el datagrama de ECO
+			System.out.println("ECO:"+ new String(receivePacket.getData()));
+			mensaje=stdIn.readLine();
+		}
+		
+		System.out.println("Cerrando conexión.");
+		socket.close();
 
-			resp = new byte[mensaje.length()];
-
-			enviar = new DatagramPacket(mensaje.getBytes(),mensaje.getBytes().length,serverAdd,port);
-			recibir = new DatagramPacket(resp,resp.length);
-
-			int intentos = 0;
-			boolean respuesta = false;
-
-			do {
-				ds.send(enviar);
-				try {
-					ds.receive(recibir);
-					if(conect >= 1 && port == ds.getPort()) { 
-						respuesta = true;
-					}else {
-						respuesta = false;
-					}
-				}catch (InterruptedIOException e) {
-					intentos+=1;
-					System.out.println("Timeout, " + intentos + " tries have been made.");
-
-				}
-
-			}while(!respuesta && intentos < MAXTRIES);
-
-			if(respuesta) {
-				recibido = new String(recibir.getData());
-				System.out.println("Respuesta: "+ recibido);
-				if(conect == 0) { // stores the port of the thread
-					conect = 1;
-					port = recibir.getPort();
-				}
-			}else {
-				System.out.println("No se ha recuperado respuesta");
-				mensaje = ".";
-			}
-
-		}while(!mensaje.equals("."));
-		sc.close();
-		ds.close();
 	}
-
 }

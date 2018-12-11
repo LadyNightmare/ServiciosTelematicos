@@ -19,12 +19,15 @@ public class ServerUDPImpl extends Thread {
 	public void run () {
 		
 		try {
-			
 			DatagramSocket socket = new DatagramSocket();
 			
 			DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
 			
-			socket.send(packet);
+			if (!(new String (packet.getData()).equals("."))) {
+				
+				socket.send(packet);
+				
+			}
 			
 			socket.close();
 			

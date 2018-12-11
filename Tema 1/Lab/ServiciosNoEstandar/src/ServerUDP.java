@@ -7,7 +7,10 @@ public class ServerUDP {
 
 		System.out.println("Servidor iniciado.");
 
-		int port = 2510;
+		int port = 54321;
+		InetAddress localAddr = InetAddress.getByName("localhost");
+		DatagramSocket ds;
+		ds = new DatagramSocket(port, localAddr);
 
 		if (args.length > 1) {
 			throw new IllegalArgumentException("Parameter: [<Port>]");
@@ -18,76 +21,22 @@ public class ServerUDP {
 
 		}
 
-		DatagramSocket socketServidor = null;
-
 		try {
-
-			socketServidor = new DatagramSocket(port);
-			System.out.println("Socket inicializado: " + socketServidor.getLocalPort() + " " + socketServidor.getInetAddress());
-
+			byte[] buffer = new byte[2048];
+			DatagramPacket datagram = new DatagramPacket(buffer,
+					buffer.length);
+			while (true) {
+				ds.receive(datagram);
+				System.out.println("Nueva peticion de servicio");
+				// Inicio de una hebra para la peticion actual
+				(new ServerUDPImpl(datagram)).start();
+			}
 		} catch (IOException e) {
-
-			System.out.println("Error al crear el objeto socket servidor");
-			System.exit(0);
-
-		}
-
-		byte [] recibirDatos = new byte[8192];
-		byte [] enviarDatos = new byte[8192];
+			System.err.println("Error E/S en: " + e.getMessage());
+		} finally {
+				if (ds != null)
+					ds.close();
+			}
 		
-		System.out.println(socketServidor.isConnected());
-
-		while(true) {
-			
-			System.out.println("hola");
-
-			DatagramPacket recibirPaquete = new DatagramPacket(recibirDatos, recibirDatos.length);
-
-			System.out.println("adios");
-			
-			try {
-
-				System.out.println("adios");
-				
-				socketServidor.receive(recibirPaquete);
-				System.out.println(socketServidor.isConnected());
-				
-				System.out.println("adios");
-
-			} catch (IOException e) {
-
-				System.out.println("Error al recibir");
-				e.printStackTrace();
-				socketServidor.close();
-				System.exit(0);
-
-			}
-			
-			System.out.println(socketServidor.isConnected());
-
-			String frase = new String(recibirPaquete.getData());
-
-			InetAddress DireccionIP = recibirPaquete.getAddress();
-			int puerto = recibirPaquete.getPort();
-
-			enviarDatos = frase.getBytes();
-
-			DatagramPacket enviarPaquete = new DatagramPacket(enviarDatos, enviarDatos.length, DireccionIP, puerto);
-
-			try {       
-
-				socketServidor.send(enviarPaquete);
-				socketServidor.close();
-
-			} catch (IOException e) {
-
-				System.out.println("Error al enviar");
-				socketServidor.close();
-				System.exit(0);
-
-			}
-		}
-
-
 	}
 }
